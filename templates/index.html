@@ -3,8 +3,32 @@
 {% block title %}Beranda - Tani Toko{% endblock %}
 
 {% block content %}
-<div class="p-5 mb-4 bg-white rounded-3 shadow-sm text-center">
-    <h1 class="display-5 fw-bold text-success">Selamat Datang di Tani Toko! 🚜</h1>
-    <p class="fs-4 text-muted">Beli hasil panen segar langsung dari kelompok tani lokal tanpa perantara.</p>
+<div class="p-4 mb-4 bg-white rounded-3 shadow-sm text-center">
+    <h1 class="display-6 fw-bold text-success">🌾 Tani Toko Market</h1>
+    <p class="fs-5 text-muted">Beli hasil panen segar langsung dari kelompok tani lokal tanpa tengkulak.</p>
+</div>
+
+<h4 class="mb-3">Katalog Hasil Tani Fresh</h4>
+<div class="row">
+    {% for item in produk_list %}
+    <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <span class="badge bg-success mb-2">{{ item['kategori'] }}</span>
+                <h5 class="card-title fw-bold">{{ item['nama_produk'] }}</h5>
+                <p class="card-text text-danger fw-bold fs-5 mb-1">Rp {{ item['harga'] }} / kg</p>
+                <p class="card-text text-muted mb-2">Stok Tersedia: {{ item['stok'] }} kg</p>
+                <hr>
+                <small class="text-secondary d-block">🚜 <strong>{{ item['nama_kelompok'] }}</strong></small>
+                <small class="text-secondary d-block">📍 {{ item['lokasi'] }}</small>
+                <a href="https://wa.me/{{ item['no_hp'] }}?text=Halo,%20saya%20mau%20beli%20{{ item['nama_produk'] }}" target="_blank" class="btn btn-outline-success btn-sm w-100 mt-3">Hubungi Petani (WA)</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center text-muted py-5">
+        <h5>Belum ada produk hasil tani yang tersedia.</h5>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}
