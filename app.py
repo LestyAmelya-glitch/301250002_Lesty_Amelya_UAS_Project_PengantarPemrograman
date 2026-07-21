@@ -1,14 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
+import json
 
 app = Flask(__name__)
 app.secret_key = 'tani_toko_secret_key_bebas_diisi'
 
+# Koneksi ke Database SQLite
 def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
     return conn
 
+# Inisialisasi Struktur Database
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -50,16 +53,18 @@ def index():
     conn.close()
     return render_template('index.html', produk_list=produk_list)
 
-# --- LOGIN & LOGOUT ---
+# --- AUTHENTIKASI ADMIN ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        if request.form['username'] == 'admin' and request.form['password'] == 'admin123':
+        username = request.form['username']
+        password = request.form['password']
+        if username == 'admin' and password == 'admin123':
             session['logged_in'] = True
             flash('Selamat datang kembali, Admin!', 'success')
             return redirect(url_for('dashboard'))
         else:
-            flash('Username atau password tidak valid!', 'danger')
+            flash('Username atau password salah!', 'danger')
     return render_template('login.html')
 
 @app.route('/logout')
@@ -68,7 +73,7 @@ def logout():
     flash('Berhasil keluar dari sistem.', 'info')
     return redirect(url_for('login'))
 
-# --- DASHBOARD ADMIN (TANPA CRUD - HANYA STATISTIK & GRAFIK) ---
+# --- DASHBOARD ADMIN (STATISTIK & GRAFIK TANPA CRUD) ---
 @app.route('/dashboard')
 def dashboard():
     if not session.get('logged_in'):
@@ -76,16 +81,16 @@ def dashboard():
         return redirect(url_for('login'))
         
     conn = get_db_connection()
-    total_petani = conn.execute('SELECT COUNT(*) FROM kelompok_tani').fetchone()[0]
-    total_produk = conn.execute('SELECT COUNT(*) FROM produk').fetchone()[0]
+    total_petani = conn.execute('SELECT COUNT(*) FROM kelompok_tani').fetchone()[0] or 0
+    total_produk = conn.execute('SELECT COUNT(*) FROM produk').fetchone()[0] or 0
     total_stok = conn.execute('SELECT SUM(stok) FROM produk').fetchone()[0] or 0
     
-    # Ambil data statistik per kategori untuk Grafik Chart.js
+    # Data Kategori untuk Grafik
     kat_data = conn.execute('SELECT kategori, COUNT(*) as jumlah FROM produk GROUP BY kategori').fetchall()
-    categories = [row['kategori'] for row in kat_data]
-    counts = [row['jumlah'] for row in kat_data]
+    categories = [row['kategori'] for row in kat_data] if kat_data else ['Belum Ada Data']
+    counts = [row['jumlah'] for row in kat_data] if kat_data else [0]
 
-    # Produk dengan stok terendah (peringatan stok)
+    # Produk Stok Menipis
     stok_rendah = conn.execute('SELECT nama_produk, stok FROM produk ORDER BY stok ASC LIMIT 5').fetchall()
     
     conn.close()
@@ -93,8 +98,8 @@ def dashboard():
                            total_petani=total_petani, 
                            total_produk=total_produk, 
                            total_stok=total_stok,
-                           categories=categories,
-                           counts=counts,
+                           categories_json=json.dumps(categories),
+                           counts_json=json.dumps(counts),
                            stok_rendah=stok_rendah)
 
 # --- HALAMAN KHUSUS KELOLA DATA (CRUD) ---
@@ -114,7 +119,7 @@ def kelola_data():
     conn.close()
     return render_template('kelola_data.html', petani_list=petani_list, produk_list=produk_list)
 
-# --- PROSES CRUD ---
+# --- PROSES AKSI CRUD ---
 @app.route('/tambah_tani', methods=['POST'])
 def tambah_tani():
     if not session.get('logged_in'): return redirect(url_for('login'))
@@ -134,7 +139,7 @@ def hapus_tani(id):
     conn.execute('DELETE FROM produk WHERE tani_id = ?', (id,))
     conn.commit()
     conn.close()
-    flash('Data Kelompok Tani dihapus!', 'warning')
+    flash('Data Kelompok Tani berhasil dihapus!', 'warning')
     return redirect(url_for('kelola_data'))
 
 @app.route('/tambah_produk', methods=['POST'])

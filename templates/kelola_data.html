@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Kelola Data - Tani Toko{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark mb-0"><i class="fa-solid fa-database text-success me-2"></i>Kelola Data Tani & Produk</h2>
+    <a href="/dashboard" class="btn btn-outline-secondary rounded-pill"><i class="fa-solid fa-arrow-left me-1"></i>Kembali ke Dashboard</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="row g-4">
+    <!-- Form & Tabel Kelompok Tani -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-header bg-success text-white fw-bold"><i class="fa-solid fa-user-plus me-2"></i>Tambah Kelompok Tani</div>
+            <div class="card-body">
+                <form action="/tambah_tani" method="POST">
+                    <div class="mb-2"><input type="text" name="nama_kelompok" class="form-control" placeholder="Nama Kelompok Tani" required></div>
+                    <div class="mb-2"><input type="text" name="nama_ketua" class="form-control" placeholder="Nama Ketua / Penanggung Jawab" required></div>
+                    <div class="mb-2"><input type="text" name="lokasi" class="form-control" placeholder="Lokasi / Desa" required></div>
+                    <div class="mb-3"><input type="text" name="no_hp" class="form-control" placeholder="No HP/WA (cth: 62812345678)" required></div>
+                    <button type="submit" class="btn btn-success w-100 fw-bold"><i class="fa-solid fa-save me-1"></i>Simpan Tani</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-dark text-white fw-bold"><i class="fa-solid fa-users me-2"></i>Daftar Kelompok Tani</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light"><tr><th>Kelompok</th><th>Lokasi</th><th class="text-center">Aksi</th></tr></thead>
+                    <tbody>
+                        {% for t in petani_list %}
+                        <tr>
+                            <td><strong>{{ t['nama_kelompok'] }}</strong><br><small class="text-muted">{{ t['nama_ketua'] }}</small></td>
+                            <td>{{ t['lokasi'] }}</td>
+                            <td class="text-center">
+                                <a href="/hapus_tani/{{ t['id'] }}" class="btn btn-danger btn-sm rounded-circle" onclick="return confirm('Hapus kelompok tani ini?')"><i class="fa-solid fa-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form & Tabel Produk -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-header bg-primary text-white fw-bold"><i class="fa-solid fa-plus me-2"></i>Tambah Hasil Panen</div>
+            <div class="card-body">
+                <form action="/tambah_produk" method="POST" class="row g-2">
+                    <div class="col-md-6">
+                        <select name="tani_id" class="form-select" required>
+                            <option value="">-- Pilih Kelompok Tani --</option>
+                            {% for t in petani_list %}
+                            <option value="{{ t['id'] }}">{{ t['nama_kelompok'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6"><input type="text" name="nama_produk" class="form-control" placeholder="Nama Hasil Tani" required></div>
+                    <div class="col-md-4">
+                        <select name="kategori" class="form-select" required>
+                            <option value="Sayuran">Sayuran</option>
+                            <option value="Buah-buahan">Buah-buahan</option>
+                            <option value="Beras & Biji">Beras & Biji</option>
+                            <option value="Rempah">Rempah</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4"><input type="number" name="harga" class="form-control" placeholder="Harga /kg (Rp)" required></div>
+                    <div class="col-md-4"><input type="number" name="stok" class="form-control" placeholder="Stok (Kg)" required></div>
+                    <div class="col-12 mt-3"><button type="submit" class="btn btn-primary w-100 fw-bold"><i class="fa-solid fa-save me-1"></i>Simpan Hasil Tani</button></div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-dark text-white fw-bold"><i class="fa-solid fa-cubes me-2"></i>Daftar Hasil Tani</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light"><tr><th>Produk</th><th>Tani</th><th>Harga</th><th>Stok</th><th class="text-center">Aksi</th></tr></thead>
+                    <tbody>
+                        {% for p in produk_list %}
+                        <tr>
+                            <td><strong>{{ p['nama_produk'] }}</strong><br><span class="badge bg-info text-dark">{{ p['kategori'] }}</span></td>
+                            <td>{{ p['nama_kelompok'] }}</td>
+                            <td>Rp {{ "{:,}".format(p['harga']) }}</td>
+                            <td>{{ p['stok'] }} kg</td>
+                            <td class="text-center">
+                                <a href="/hapus_produk/{{ p['id'] }}" class="btn btn-danger btn-sm rounded-circle" onclick="return confirm('Hapus produk ini?')"><i class="fa-solid fa-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
